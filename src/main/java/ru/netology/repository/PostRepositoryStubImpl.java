@@ -1,6 +1,7 @@
 package ru.netology.repository;
 
 import org.springframework.stereotype.Repository;
+import ru.netology.exception.NotFoundException;
 import ru.netology.model.Post;
 
 import java.util.ArrayList;
@@ -14,12 +15,21 @@ public class PostRepositoryStubImpl implements PostRepository {
     private AtomicLong count = new AtomicLong(0);
 
     public List<Post> all() {
-        return posts;
+        List<Post> postsNotRemoved = new ArrayList<>();
+        for (Post element : posts) {
+            if (!element.isRemoved()) {
+                postsNotRemoved.add(element);
+            }
+        }
+        return postsNotRemoved;
     }
 
     public Optional<Post> getById(long id) {
         for (Post element : posts) {
             if (element.getId() == id) {
+                if (element.isRemoved()) {
+                    throw new NotFoundException();
+                }
                 return Optional.of(element);
             }
         }
@@ -30,6 +40,9 @@ public class PostRepositoryStubImpl implements PostRepository {
         if (post.getId() != 0) {
             for (Post element : posts) {
                 if (element.getId() == post.getId()) {
+                    if (element.isRemoved()) {
+                        throw new NotFoundException();
+                    }
                     return post;
                 }
             }
@@ -41,9 +54,9 @@ public class PostRepositoryStubImpl implements PostRepository {
     }
 
     public void removeById(long id) {
-        for (Post element : posts) {
-            if (element.getId() == id) {
-                posts.remove(element);
+        for (Post post : posts) {
+            if (post.getId() == id) {
+                post.setRemoved(true);
                 break;
             }
         }
